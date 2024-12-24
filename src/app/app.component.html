@@ -1,0 +1,7 @@
+<nav mat-tab-nav-bar class="tabs" [tabPanel]="tabPanel">
+    <a mat-tab-link routerLink="/data" routerLinkActive="active-link">Olympic Data</a>
+    <a mat-tab-link routerLink="/equities" routerLinkActive="active-link">Equities Data</a>
+</nav>
+<div #tabPanel>
+    <router-outlet></router-outlet>
+</div>

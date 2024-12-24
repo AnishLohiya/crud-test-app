@@ -1,0 +1,17 @@
+<div>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="openCreateModal()"
+  >
+    Add Record
+  </button>
+</div>
+<app-ag-generic-grid
+  [rowData]="olympicData"
+  [columnDefs]="colDefs"
+  [defaultColDef]="defaultColDef"
+  [pagination]="pagination"
+  [paginationPageSize]="paginationPageSize"
+  [paginationPageSizeSelector]="paginationPageSizeSelector"
+></app-ag-generic-grid>

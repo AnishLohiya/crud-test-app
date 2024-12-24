@@ -1,0 +1,48 @@
+<div class="toolbar">
+    <button mat-raised-button color="primary" (click)="openCreateModal()">Add Equity</button>
+    <mat-form-field>
+        <input matInput type="search" placeholder="Search By Column" [(ngModel)]="searchCol"
+            (input)="onSearchColumn()" />
+        <button matSuffix mat-icon-button aria-label="Search">
+            <mat-icon>search</mat-icon>
+        </button>
+    </mat-form-field>
+</div>
+
+<div class="example-wrapper">
+    <div>
+        <div class="button-group">
+          <button (click)="saveFilterModel()">Save Preset</button>
+          <button (click)="clearFilters()">Reset Preset</button>
+        </div>
+        <div>
+          <label for="savedFiltersSelect">Apply Saved Preset:</label>
+          <select id="savedFiltersSelect" (change)="applySavedFilter($event)">
+            <option value="empty">Select a filter</option>
+            <option *ngFor="let filter of filtersList" [value]="filter.name">
+              {{ filter.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+      <!-- <div>
+        <div class="button-group">
+          Saved Filters & Columns: <span id="savedFilters">(none)</span>
+        </div>
+      </div> -->
+    
+
+    <ag-grid-angular style="height: 800px; 
+
+    @media screen and (max-height: 600px) {
+      height: 200px;
+    }" class="ag-theme-quartz" [rowData]="equities" [columnDefs]="colDefs" [defaultColDef]="defaultColDef"
+        [pagination]="pagination" [paginationPageSize]="paginationPageSize"
+        [paginationPageSizeSelector]="paginationPageSizeSelector" (gridReady)="onGridReady($event)"
+        (cellValueChanged)="onCellValueChanged($event)" />
+</div>
+
+
+<button (click)="onBtExport()" style="font-weight: bold; margin-top: 10px; margin-bottom: 10px;">
+    Export to CSV
+</button>

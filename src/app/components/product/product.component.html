@@ -1,0 +1,11 @@
+<div>
+    <button mat-raised-button color="primary" (click)="openCreateModal()">Add Product</button>
+</div>
+  <app-ag-generic-grid
+  [rowData]="products"
+  [columnDefs]="colDefs"
+  [defaultColDef]="defaultColDef"
+  [pagination]="pagination"
+  [paginationPageSize]="paginationPageSize"
+  [paginationPageSizeSelector]="paginationPageSizeSelector"
+></app-ag-generic-grid>
