@@ -7,6 +7,7 @@ export interface IEquity {
     stock_sector: string,
     stock_industry: string,
     stock_market_cap: string,
+    multi_cell: string[],
     purchase_price: number,
     sale_price: number,
     profit: number,

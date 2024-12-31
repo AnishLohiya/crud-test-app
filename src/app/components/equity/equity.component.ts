@@ -2,7 +2,7 @@ import { Component, EventEmitter, input, Output, signal } from '@angular/core';
 import { IEquity } from '../../interfaces/iequity';
 import { EquityService } from '../../services/equity/equity.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { ColDef, GridApi, GridReadyEvent, SideBarDef } from 'ag-grid-community';
+import { ColDef, GridApi, GridOptions, GridReadyEvent, IRichCellEditorParams, RowModelType, SideBarDef, ValueFormatterParams, ValueParserParams } from 'ag-grid-community';
 import { ActionCellRendererComponent } from '../action-cell-renderer/action-cell-renderer.component';
 import { FormModalComponent } from '../../shared/form-modal/form-modal.component';
 import { equityFormFields } from '../../utils/equityFormFields';
@@ -15,10 +15,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { NgFor } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MultiCellRenderer } from '../../shared/custom-render/multi-cell.renderer.component';
+import {MatChipSet, MatChipsModule} from '@angular/material/chips';
+import { MultiSelectComponent } from '../../shared/dropdown/multi-select/multi-select.component';
 
 @Component({
   selector: 'app-equity',
-  imports: [MatDialogModule, AgGridAngular, FormsModule, MatFormFieldModule, MatIconModule, MatInputModule, NgFor],
+  imports: [MatDialogModule, AgGridAngular, FormsModule, MatFormFieldModule, MatIconModule, MatInputModule, NgFor, MatAutocompleteModule, MatChipsModule],
   templateUrl: './equity.component.html',
   styleUrl: './equity.component.scss'
 })
@@ -26,25 +30,24 @@ export class EquityComponent {
 
   equities: IEquity[] = [];
   private gridApi!: GridApi<IEquity>;
-  searchCol: string = '';
+  selectedCol: string = '';
   jsonFilePath: string = 'presets.json';
   filtersList: { name: string; state: { filterModel: any; columnState: any[] } }[] = [];
-
   constructor(private equityService: EquityService, private dialog: MatDialog,
     private http: HttpClient
   ) { }
 
   colDefs: ColDef[] = [
-    { field: 'id', filter: 'agTextColumnFilter' },
-    { field: 'company_name' },
-    { field: 'stock_symbol' },
+    { field: 'id', filter: 'agTextColumnFilter', minWidth: 100, pinned: 'left'},
+    { field: 'company_name', pinned: 'left' },
+    { field: 'stock_symbol', pinned: 'left'},
     {
-      field: 'purchase_date', filter: 'agDateColumnFilter',
+      field: 'purchase_date', filter: 'agDateColumnFilter'
     },
     {
-      field: 'sale_date', filter: 'agDateColumnFilter',
+      field: 'sale_date', filter: 'agDateColumnFilter'
     },
-    { field: 'stock_name' },
+    { field: 'stock_name'},
     { field: 'stock_sector' },
     {
       field: 'stock_industry',
@@ -57,7 +60,18 @@ export class EquityComponent {
       cellEditorParams: {
         values: marketCapValues,
         cellRender: (params: any) => params.value,
-      }
+      },
+    },
+    {
+      field: 'multi_cell',
+      cellRenderer: MultiCellRenderer,
+      cellEditor: MultiSelectComponent,
+      cellEditorParams: {
+        values: marketCapValues,
+        cellRender: (params: any) => params.value,
+        suppressMultiSelectPillRenderer: true,
+      },
+      minWidth: 250,
     },
     { field: 'purchase_price' },
     { field: 'sale_price' },
@@ -93,21 +107,66 @@ export class EquityComponent {
     },
   ];
 
-  cellClassRules = {
-    'highlight-cell': (params: any) => params.data && params.data[`${params.colDef.field}Highlight`],
+  valueFormatter = (params: ValueFormatterParams) => {
+    const { value } = params;
+    if (Array.isArray(value)) {
+      return value.join(", ");
+    }
+    return value;
+  };
+  valueParser = (params: ValueParserParams) => {
+    const { newValue } = params;
+    if (newValue == null || newValue === "") {
+      return null;
+    }
+    return params.newValue.split(",");
   };
 
+
   defaultColDef: ColDef = {
-    flex: 1,
-    minWidth: 100,
+    resizable: true,
     filter: true,
     floatingFilter: true,
     editable: true,
+    valueFormatter: this.valueFormatter,
+    valueParser: this.valueParser,
   };
 
+
+  gridOptions: GridOptions = {
+    onCellValueChanged: (params) => {
+      const selectedNodes = params.api.getSelectedNodes();
+      selectedNodes.forEach(node => {
+        if (node !== params.node) {
+          node.setDataValue(params.column.getId(), params.newValue);
+        }
+      });
+      this.equityService.updateEquity(params.data.id, params.data).subscribe({
+        next: () => {
+          this.loadEquities();
+        },
+        error: (err) => {
+          console.error('Error updating equity', err);
+        }
+      });
+    },
+    rowSelection: {
+      mode: "multiRow",
+    },
+    selectionColumnDef: {
+      pinned: 'left'
+    },
+    // rowModelType: 'infinite',
+    // cacheBlockSize: 100, 
+    // maxBlocksInCache: 10,
+    // cacheOverflowSize: 2, 
+    // rowBuffer: 50,
+  };
+
+
   pagination: boolean = true;
-  paginationPageSize: number = 20;
-  paginationPageSizeSelector: number[] = [20, 50, 100, 200];
+  paginationPageSize: number = 50;
+  paginationPageSizeSelector: number[] = [50, 100, 200, 500];
 
   ngOnInit(): void {
     this.loadEquities();
@@ -123,8 +182,8 @@ export class EquityComponent {
         console.error('Error loading equities', err);
       }
     })
-  }
 
+  }
 
   openCreateModal() {
     const dialogRef = this.dialog.open(FormModalComponent, {
@@ -135,7 +194,6 @@ export class EquityComponent {
     });
 
     dialogRef.afterClosed().subscribe((result: IEquity) => {
-      console.log('result', result);
       const purchase_date = formatDateToDDMMYYYY(result.purchase_date);
       const sale_date = formatDateToDDMMYYYY(result.sale_date);
       result = { ...result, purchase_date, sale_date };
@@ -161,12 +219,10 @@ export class EquityComponent {
             }
           },
         });
-        console.log('equity', equity);
         dialogRef.afterClosed().subscribe((result: IEquity) => {
           const purchase_date = formatDateToDDMMYYYY(result.purchase_date);
           const sale_date = formatDateToDDMMYYYY(result.sale_date);
           result = { ...result, purchase_date, sale_date };
-          console.log('result', result);
           if (result) {
             this.equityService.updateEquity(id, result).subscribe({
               next: () => {
@@ -196,33 +252,50 @@ export class EquityComponent {
     });
   }
 
-  onCellValueChanged(params: any) {
-    this.equityService.updateEquity(params.data.id, params.data).subscribe({
-      next: () => {
-        this.loadEquities();
-      },
-      error: (err) => {
-        console.error('Error updating equity', err);
-      }
-    });
+  showColumnChooser() {
+    this.gridApi.showColumnChooser();
   }
 
-  onBtExport() {
+  onCsvExport() {
+    this.gridApi.exportDataAsCsv();
+  }
+
+  onExcelExport() {
     this.gridApi.exportDataAsExcel();
   }
 
-  public sideBar: SideBarDef | string | string[] | boolean | null = "filters";
+  public sideBar: SideBarDef | string | string[] | boolean | null = "columns";
+
+  // dataSource = {
+  //   getRows: (params: any) => {
+  //     this.equityService.getEquities().subscribe({
+  //       next: (data: any) => {
+  //         console.log('Data:', data);
+  //         params.successCallback(data, data.length);
+  //       },
+  //       error: (err) => {
+  //         console.error('Error loading equities', err);
+  //       }
+  //     });
+  //   }
+  // };
 
   onGridReady(params: GridReadyEvent<IEquity>) {
     this.gridApi = params.api;
-
+    this.setColumnDefs();
+    // this.gridApi.setGridOption('datasource', this.dataSource);
+    // console.log(this.dataSource);
+    // this.gridApi.sizeColumnsToFit();
     // const toolPanelInstance = params.api.getToolPanelInstance('filters');
     // if (toolPanelInstance) {
     //   toolPanelInstance.expandFilters();
     // }
   }
 
-
+  setColumnDefs() {
+    const columnIds = this.gridApi.getAllGridColumns().map((col) => col.getId());
+    this.gridApi.autoSizeColumns(columnIds, false);
+  }
 
   clearFilters() {
     this.gridApi.setFilterModel(null);
@@ -230,38 +303,40 @@ export class EquityComponent {
     document.getElementsByTagName('select')[0].selectedIndex = 0;
   }
 
-  onSearchColumn() {
+  filteredList: any[] = [];
+
+  onSearchColumn(event: Event) {
+    const searchCol = (event.target as HTMLInputElement).value;
+  
     const cols = this.gridApi.getAllGridColumns();
-
-    const searchedCols = cols.filter((col) => col.getColId().toLowerCase().includes(this.searchCol.toLowerCase()));
-    if (searchedCols.length > 0) {
-      this.gridApi.moveColumns(searchedCols, 4);
-    }
-
-    console.log(this.gridApi.getColumnState());
+    this.filteredList = cols.filter((col) =>
+      col.getColId().toLowerCase().includes(searchCol.toLowerCase())
+    );
   }
+  
+  onColumnSelected(event: MatAutocompleteSelectedEvent) {
+    const selectedColumn = event.option.value;
+    console.log('Selected Column:', selectedColumn);
 
-  // saveFilterModel() {
-  //   const filterModel = this.gridApi.getFilterModel();
-  //   const columnState = this.gridApi.getColumnState();
+    this.gridApi.ensureColumnVisible(selectedColumn, "start");
+    
+    const column = this.gridApi.getColumnDef(selectedColumn);
+    console.log('Column:', column);
+    if (column) {
+      column.cellClass = 'highlight-column';
 
-  //   if (Object.keys(filterModel).length > 0 || columnState.length > 0) {
-  //     const filterName = prompt("Enter a name for the filter:");
-  //     if (filterName) {
-  //       this.filtersList.push({ name: filterName, state: { filterModel, columnState } });
-  //       console.log('filtersList', this.filtersList);   
-  //     }
-  //     this.clearFilters();
-  //   } else {
-  //     alert("No filters to save.");
-  //   }
-  // }
+      setTimeout(() => {
+        column.cellClass = '';
+        this.gridApi.refreshCells({ force: true });
+      }, 1000);
+      this.gridApi.refreshCells({ force: true });
+    }
+  }
 
   loadPresets() {
     this.http.get('http://localhost:8000/presets').subscribe({
       next: (data: any) => {
         this.filtersList = data;
-        console.log('filtersList', this.filtersList);
       },
       error: (err) => {
         console.error('Error loading presets', err);
@@ -280,14 +355,13 @@ export class EquityComponent {
         this.http.post('http://localhost:8000/presets', newPreset).subscribe({
           next: () => {
             this.filtersList.push(newPreset);
-            console.log('filtersList', this.filtersList);
+            this.clearFilters();
           },
           error: (err) => {
             console.error('Error saving filter', err);
           }
         });
       }
-      this.clearFilters();
     } else {
       alert("No filters to save.");
     }
@@ -295,21 +369,12 @@ export class EquityComponent {
 
   applySavedFilter(event: Event) {
     const name = (event.target as HTMLSelectElement).value;
-    console.log('Selected filter name:', name);
 
     const selectedFilter = this.filtersList.find(filter => filter.name === name);
-    console.log('Selected filter object:', selectedFilter);
 
     if (selectedFilter) {
       this.gridApi.setFilterModel(selectedFilter.state.filterModel);
       this.gridApi.applyColumnState({ state: selectedFilter.state.columnState, applyOrder: true });
     }
   }
-
-  // only to view the saved filters
-  // updateSavedFiltersDisplay() {
-  //   const filterNames = this.filtersList.map(filter => filter.name).join(", ") || "(none)";
-  //   (document.querySelector("#savedFilters") as any).textContent = filterNames;
-  // }
-
 }

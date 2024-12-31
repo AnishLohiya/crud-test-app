@@ -17,13 +17,13 @@
       <div *ngIf="field.type === 'select'">
         <mat-form-field appearance="outline" class="form-field">
           <mat-label>{{ field.label }}</mat-label>
-          <mat-select formControlName="{{ field.name }}">
+          <mat-select [formControlName]="field.name" [multiple]="field.multi">
             <mat-option *ngFor="let option of field.options" [value]="option">
               {{ option }}
             </mat-option>
           </mat-select>
         </mat-form-field>
-      </div>
+      </div>      
       <div *ngIf="field.type !== 'select' && field.type !== 'date'">
         <mat-form-field appearance="outline" class="form-field">
           <mat-label>{{ field.label }}</mat-label>
