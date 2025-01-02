@@ -7,7 +7,7 @@ import { IOlympicData } from '../interfaces/iolympic-data';
   providedIn: 'root'
 })
 export class OlympicsDataService {
-   private apiUrl = "http://localhost:8000/data";
+   private apiUrl = "http://localhost:8801/data";
 
   constructor(private httpClient: HttpClient) { }
 

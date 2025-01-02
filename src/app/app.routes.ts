@@ -5,20 +5,22 @@ import { EquityComponent } from './components/equity/equity.component';
 
 export const routes: Routes = [
     {
-        path: "",
-        redirectTo: "data",
-        pathMatch: "full"
+      path: 'data-tabs',
+      children: [
+        { path: 'products', component: ProductComponent },
+        { path: 'data', component: OlympicDataComponent },
+        { path: 'equities', component: EquityComponent },
+        { path: '', redirectTo: 'products', pathMatch: 'full' },
+      ],
     },
     {
-        path: "data",
-        component: OlympicDataComponent
+      path: 'custom-tabs',
+      children: [
+        { path: 'products', component: ProductComponent },
+        { path: 'data', component: OlympicDataComponent },
+        { path: 'equities', component: EquityComponent },
+        { path: '', redirectTo: 'products', pathMatch: 'full' },
+      ],
     },
-    {
-        path: "products",
-        component: ProductComponent
-    },
-    {
-        path: 'equities',
-        component: EquityComponent
-    }
-];
+    { path: '', redirectTo: '/data-tabs/products', pathMatch: 'full' },
+  ];
