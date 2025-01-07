@@ -4,6 +4,7 @@ import { MatTabGroup, MatTabLink, MatTabNavPanel, MatTabsModule } from '@angular
 import { ProductComponent } from '../../components/product/product.component';
 import { OlympicDataComponent } from '../../components/olympic-data/olympic-data.component';
 import { EquityComponent } from '../../components/equity/equity.component';
+import { CustomComponent } from '../../components/custom/custom.component';
 
 
 @Component({
@@ -14,6 +15,7 @@ import { EquityComponent } from '../../components/equity/equity.component';
 })
 export class TaskGroupComponent {
   tabs = [
+    { label: 'Custom', component: CustomComponent },
     { label: 'Products', component: ProductComponent },
     { label: 'Olympic Data', component: OlympicDataComponent },
     { label: 'Equity', component: EquityComponent },

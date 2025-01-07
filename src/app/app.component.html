@@ -1,4 +1,4 @@
-<!-- <mat-tab-group>
+<mat-tab-group>
   <mat-tab label="Data Tabs">
     <nav mat-tab-nav-bar [tabPanel]="tabPanel">
       <a
@@ -18,6 +18,12 @@
         routerLink="/data-tabs/equities"
         routerLinkActive="active-link"
         >Equities Data</a
+      >
+      <a
+        mat-tab-link
+        routerLink="/data-tabs/custom"
+        routerLinkActive="active-link"
+        >Custom Data</a
       >
     </nav>
   </mat-tab>
@@ -47,6 +53,6 @@
 
 <div #tabPanel>
   <router-outlet></router-outlet>
-</div> -->
+</div>
 
-<app-task-group></app-task-group>
+<!-- <app-task-group></app-task-group> -->

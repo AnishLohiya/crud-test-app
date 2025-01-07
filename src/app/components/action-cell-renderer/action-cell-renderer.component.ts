@@ -33,4 +33,5 @@ export class ActionCellRendererComponent implements ICellRenderer {
       this.params.onDelete(recordId);
     }
   }
+  
 }

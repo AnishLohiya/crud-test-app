@@ -1,4 +1,4 @@
-import { Component, EventEmitter, input, Output, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { IEquity } from '../../interfaces/iequity';
 import { EquityService } from '../../services/equity/equity.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -7,8 +7,6 @@ import {
   GridApi,
   GridOptions,
   GridReadyEvent,
-  IRichCellEditorParams,
-  RowModelType,
   SideBarDef,
   ValueFormatterParams,
   ValueParserParams,
@@ -22,20 +20,22 @@ import {
 } from '../../shared/functions/shared-functions';
 import { AgGridAngular } from 'ag-grid-angular';
 import { FormsModule } from '@angular/forms';
-import { marketCapValues } from '../../utils/drop-down/market-cap';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { NgFor } from '@angular/common';
+import { NgForOf } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
 import { MultiCellRenderer } from '../../shared/custom-render/multi-cell.renderer.component';
-import { MatChipSet, MatChipsModule } from '@angular/material/chips';
+import { MatChipsModule } from '@angular/material/chips';
 import { MultiSelectComponent } from '../../shared/dropdown/multi-select/multi-select.component';
-import { TestComponent } from './test.component';
+import { TestComponent } from '../equity/test.component';
+import { ColType, EditType } from '../../../../enums/enums';
+import { ColumnFactory } from '../../../../factories/ColumnFactory/ColumnFactory';
+import { ActionItemsColumnFactory } from '../../../../factories/ActionItemsColumnFactory/ActionItemsColumnFactory';
 
 @Component({
   selector: 'app-equity',
@@ -46,14 +46,14 @@ import { TestComponent } from './test.component';
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    NgFor,
     MatAutocompleteModule,
     MatChipsModule,
+    NgForOf
   ],
-  templateUrl: './equity.component.html',
-  styleUrl: './equity.component.scss',
+  templateUrl: './custom.component.html',
+  styleUrl: './custom.component.scss',
 })
-export class EquityComponent {
+export class CustomComponent {
   equities: IEquity[] = [];
   private gridApi!: GridApi<IEquity>;
   selectedCol: string = '';
@@ -65,84 +65,24 @@ export class EquityComponent {
   constructor(
     private equityService: EquityService,
     private dialog: MatDialog,
-    private http: HttpClient
+    private http: HttpClient,
+    private columnFactory: ColumnFactory,
+    private actionsItemsColumnFactory: ActionItemsColumnFactory
   ) {}
 
-  colDefs: ColDef[] = [
-    {
-      field: 'id',
-      filter: 'agTextColumnFilter',
-      minWidth: 100,
-      pinned: 'left',
+  columnTypes = {
+    headerAlignLeft: {
+      headerClass: 'header-align-left',
     },
-    { field: 'company_name', pinned: 'left' },
-    { field: 'stock_symbol', pinned: 'left' },
-    {
-      field: 'purchase_date',
-      filter: 'agDateColumnFilter',
+    headerAlignCenter: {
+      headerClass: 'header-align-center',
     },
-    {
-      field: 'sale_date',
-      filter: 'agDateColumnFilter',
+    headerAlignRight: {
+      headerClass: 'header-align-right',
     },
-    { field: 'stock_name' },
-    { field: 'stock_sector' },
-    {
-      field: 'stock_industry',
-    },
-    {
-      field: 'stock_market_cap',
-      cellRenderer: (params: any) => params.data.stock_market_cap,
-      cellEditor: 'agRichSelectCellEditor',
-      cellEditorParams: {
-        values: marketCapValues,
-        cellRender: (params: any) => params.value,
-      },
-    },
-    {
-      field: 'multi_cell',
-      cellRenderer: MultiCellRenderer,
-      cellEditor: MultiSelectComponent,
-      cellEditorParams: {
-        values: marketCapValues,
-        cellRender: (params: any) => params.value,
-        suppressMultiSelectPillRenderer: true,
-      },
-      minWidth: 250,
-    },
-    { field: 'purchase_price' },
-    { field: 'sale_price' },
-    { field: 'profit' },
-    { field: 'quantity' },
-    { field: 'dividend_yield' },
-    { field: 'earnings_per_share' },
-    { field: 'revenue' },
-    { field: 'expenses' },
-    { field: 'net_income' },
-    { field: 'market_price' },
-    { field: 'market_capitalization' },
-    { field: 'outstanding_shares' },
-    { field: 'equity_ratio' },
-    { field: 'debt_ratio' },
-    { field: 'return_on_equity' },
-    { field: 'price_to_earnings_ratio' },
-    { field: 'price_to_sales_ratio' },
-    { field: 'price_to_book_ratio' },
-    { field: 'beta' },
-    { field: 'volatility' },
-    { field: 'dividend_payout_ratio' },
-    {
-      headerName: 'Actions',
-      cellRenderer: ActionCellRendererComponent,
-      cellRendererParams: {
-        onEdit: (id: string) => this.updateEquity(id),
-        onDelete: (id: string) => this.deleteEquity(id),
-      },
-      minWidth: 150,
-      filter: false,
-      editable: false,
-    },
-  ];
+  };
+
+  colDefs: ColDef[] = [];
 
   valueFormatter = (params: ValueFormatterParams) => {
     const { value } = params;
@@ -174,6 +114,7 @@ export class EquityComponent {
       selectedNodes.forEach((node) => {
         if (node !== params.node) {
           node.setDataValue(params.column.getId(), params.newValue);
+          console.log('Selected Nodes:', selectedNodes);
         }
       });
       this.equityService.updateEquity(params.data.id, params.data).subscribe({
@@ -191,11 +132,8 @@ export class EquityComponent {
     selectionColumnDef: {
       pinned: 'left',
     },
-    // rowModelType: 'infinite',
-    // cacheBlockSize: 100,
-    // maxBlocksInCache: 10,
-    // cacheOverflowSize: 2,
-    // rowBuffer: 50,
+    suppressPropertyNamesCheck: true,
+    columnTypes: {},
   };
 
   pagination: boolean = true;
@@ -204,6 +142,7 @@ export class EquityComponent {
 
   ngOnInit(): void {
     this.loadEquities();
+    this.loadColDefs();
     this.loadPresets();
   }
 
@@ -216,6 +155,54 @@ export class EquityComponent {
         console.error('Error loading equities', err);
       },
     });
+  }
+
+  showColumnChooser() {
+    this.gridApi.showColumnChooser();
+  }
+
+  onCsvExport() {
+    this.gridApi.exportDataAsCsv();
+  }
+
+  onExcelExport() {
+    this.gridApi.exportDataAsExcel();
+  }
+
+  public sideBar: SideBarDef | string | string[] | boolean | null = {
+    toolPanels: [
+      {
+        id: 'columns',
+        labelDefault: 'Column Chooser',
+        labelKey: 'columns',
+        iconKey: 'columns',
+        toolPanel: 'agColumnsToolPanel',
+      },
+      {
+        id: 'filters',
+        labelDefault: 'Filters',
+        labelKey: 'filters',
+        iconKey: 'filter',
+        toolPanel: 'agFiltersToolPanel',
+      },
+      {
+        id: 'customStats',
+        labelDefault: 'Preset Panel',
+        labelKey: 'customStats',
+        iconKey: 'custom-stats',
+        toolPanel: TestComponent,
+        toolPanelParams: {
+          title: 'Present Panel',
+        },
+      },
+    ],
+    defaultToolPanel: 'columns',
+    hiddenByDefault: false,
+  };
+
+  onGridReady(params: GridReadyEvent<IEquity>) {
+    this.gridApi = params.api;
+    this.setColumnDefs();
   }
 
   openCreateModal() {
@@ -274,7 +261,7 @@ export class EquityComponent {
     });
   }
 
-  deleteEquity(id: string) {
+ deleteEquity(id: string) {
     this.equityService.deleteEquity(id).subscribe({
       next: () => {
         this.loadEquities();
@@ -284,78 +271,7 @@ export class EquityComponent {
       },
     });
   }
-
-  showColumnChooser() {
-    this.gridApi.showColumnChooser();
-  }
-
-  onCsvExport() {
-    this.gridApi.exportDataAsCsv();
-  }
-
-  onExcelExport() {
-    this.gridApi.exportDataAsExcel();
-  }
-
-  public sideBar: SideBarDef | string | string[] | boolean | null = {
-    toolPanels: [
-      {
-        id: "columns",
-        labelDefault: "Column Chooser",
-        labelKey: "columns",
-        iconKey: "columns",
-        toolPanel: "agColumnsToolPanel",
-      },
-      {
-        id: "filters",
-        labelDefault: "Filters",
-        labelKey: "filters",
-        iconKey: "filter",
-        toolPanel: "agFiltersToolPanel",
-      },
-      {
-        id: "customStats",
-        labelDefault: "Preset Panel",
-        labelKey: "customStats",
-        iconKey: "custom-stats",
-        toolPanel: TestComponent,
-        toolPanelParams: {
-          title: "Present Panel",
-        },
-      },
-    ],
-    defaultToolPanel: "columns",
-    hiddenByDefault: false,
-  };
-
-
-  // dataSource = {
-  //   getRows: (params: any) => {
-  //     this.equityService.getEquities().subscribe({
-  //       next: (data: any) => {
-  //         console.log('Data:', data);
-  //         params.successCallback(data, data.length);
-  //       },
-  //       error: (err) => {
-  //         console.error('Error loading equities', err);
-  //       }
-  //     });
-  //   }
-  // };
-
-  onGridReady(params: GridReadyEvent<IEquity>) {
-    this.gridApi = params.api;
-    this.setColumnDefs();
-
-    // this.gridApi.setGridOption('datasource', this.dataSource);
-    // console.log(this.dataSource);
-    // this.gridApi.sizeColumnsToFit();
-    // const toolPanelInstance = params.api.getToolPanelInstance('filters');
-    // if (toolPanelInstance) {
-    //   toolPanelInstance.expandFilters();
-    // }
-  }
-
+  
   setColumnDefs() {
     const columnIds = this.gridApi
       .getAllGridColumns()
@@ -451,4 +367,25 @@ export class EquityComponent {
       });
     }
   }
+
+
+  colDefData = [];
+
+  loadColDefs() {
+    this.http.get('http://localhost:3001/colConfig').subscribe({
+      next: (data: any) => {
+        this.colDefData = data;
+        this.actionsItemsColumnFactory.bindActionHandlers(this.colDefData, this.updateEquity, this.deleteEquity, this);
+        this.createColumnDefs();
+      },
+      error: (err) => {
+        console.error('Error loading column definitions', err);
+      },
+    });
+  }
+
+  createColumnDefs() {
+    this.colDefs = this.columnFactory.createColumns(this.colDefData);
+  }
+  
 }
