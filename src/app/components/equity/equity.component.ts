@@ -4,6 +4,7 @@ import { EquityService } from '../../services/equity/equity.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import {
   ColDef,
+  ExcelStyle,
   GridApi,
   GridOptions,
   GridReadyEvent,
@@ -36,6 +37,7 @@ import { MultiCellRenderer } from '../../shared/custom-render/multi-cell.rendere
 import { MatChipSet, MatChipsModule } from '@angular/material/chips';
 import { MultiSelectComponent } from '../../shared/dropdown/multi-select/multi-select.component';
 import { TestComponent } from './test.component';
+import OdataProvider from 'ag-grid-odata';
 
 @Component({
   selector: 'app-equity',
@@ -75,7 +77,18 @@ export class EquityComponent {
       minWidth: 100,
       pinned: 'left',
     },
-    { field: 'company_name', pinned: 'left' },
+    {
+      field: 'company_name',
+      pinned: 'left',
+      cellClassRules: {
+        redFont: (params) => {
+          return params.value === 'Meejo';
+        },
+        greenBackground: (params) => {
+          return params.value === 'Meejo';
+        },
+      },
+    },
     { field: 'stock_symbol', pinned: 'left' },
     {
       field: 'purchase_date',
@@ -85,10 +98,13 @@ export class EquityComponent {
       field: 'sale_date',
       filter: 'agDateColumnFilter',
     },
-    { field: 'stock_name' },
+    {
+      field: 'stock_name',
+    },
     { field: 'stock_sector' },
     {
       field: 'stock_industry',
+      cellClass: ['redFont', 'greenBackground'],
     },
     {
       field: 'stock_market_cap',
@@ -104,7 +120,7 @@ export class EquityComponent {
       cellRenderer: MultiCellRenderer,
       cellEditor: MultiSelectComponent,
       cellEditorParams: {
-        values: marketCapValues,
+        values: [],
         cellRender: (params: any) => params.value,
         suppressMultiSelectPillRenderer: true,
       },
@@ -141,6 +157,38 @@ export class EquityComponent {
       minWidth: 150,
       filter: false,
       editable: false,
+    },
+  ];
+
+  public excelStyles: ExcelStyle[] = [
+    {
+      id: 'cell',
+      alignment: {
+        vertical: 'Center',
+      },
+    },
+    {
+      id: 'greenBackground',
+    },
+    {
+      id: 'redFont',
+      font: {
+        fontName: 'Calibri Light',
+        underline: 'Single',
+        italic: true,
+        color: '#BB0000',
+      },
+    },
+    {
+      id: 'darkGreyBackground',
+      interior: {
+        color: '#888888',
+        pattern: 'Solid',
+      },
+      font: {
+        fontName: 'Calibri Light',
+        color: '#ffffff',
+      },
     },
   ];
 
@@ -190,6 +238,13 @@ export class EquityComponent {
     },
     selectionColumnDef: {
       pinned: 'left',
+    },
+
+    rowClassRules: {
+      darkGreyBackground: (params) => {
+        const id = params.data.id;
+        return id === '4926';
+      },
     },
     // rowModelType: 'infinite',
     // cacheBlockSize: 100,
@@ -300,34 +355,33 @@ export class EquityComponent {
   public sideBar: SideBarDef | string | string[] | boolean | null = {
     toolPanels: [
       {
-        id: "columns",
-        labelDefault: "Column Chooser",
-        labelKey: "columns",
-        iconKey: "columns",
-        toolPanel: "agColumnsToolPanel",
+        id: 'columns',
+        labelDefault: 'Column Chooser',
+        labelKey: 'columns',
+        iconKey: 'columns',
+        toolPanel: 'agColumnsToolPanel',
       },
       {
-        id: "filters",
-        labelDefault: "Filters",
-        labelKey: "filters",
-        iconKey: "filter",
-        toolPanel: "agFiltersToolPanel",
+        id: 'filters',
+        labelDefault: 'Filters',
+        labelKey: 'filters',
+        iconKey: 'filter',
+        toolPanel: 'agFiltersToolPanel',
       },
       {
-        id: "customStats",
-        labelDefault: "Preset Panel",
-        labelKey: "customStats",
-        iconKey: "custom-stats",
+        id: 'customStats',
+        labelDefault: 'Preset Panel',
+        labelKey: 'customStats',
+        iconKey: 'custom-stats',
         toolPanel: TestComponent,
         toolPanelParams: {
-          title: "Present Panel",
+          title: 'Present Panel',
         },
       },
     ],
-    defaultToolPanel: "columns",
+    defaultToolPanel: 'columns',
     hiddenByDefault: false,
   };
-
 
   // dataSource = {
   //   getRows: (params: any) => {
@@ -343,18 +397,18 @@ export class EquityComponent {
   //   }
   // };
 
-  onGridReady(params: GridReadyEvent<IEquity>) {
+  onGridReady(params: GridReadyEvent<IEquity>): void {
     this.gridApi = params.api;
     this.setColumnDefs();
 
-    // this.gridApi.setGridOption('datasource', this.dataSource);
-    // console.log(this.dataSource);
-    // this.gridApi.sizeColumnsToFit();
-    // const toolPanelInstance = params.api.getToolPanelInstance('filters');
-    // if (toolPanelInstance) {
-    //   toolPanelInstance.expandFilters();
-    // }
+   
   }
+  // console.log(this.dataSource);
+  // this.gridApi.sizeColumnsToFit();
+  // const toolPanelInstance = params.api.getToolPanelInstance('filters');
+  // if (toolPanelInstance) {
+  //   toolPanelInstance.expandFilters();
+  // }
 
   setColumnDefs() {
     const columnIds = this.gridApi

@@ -24,10 +24,12 @@
     "ag-grid-angular": "^32.3.3",
     "ag-grid-community": "^32.3.3",
     "ag-grid-enterprise": "^32.3.3",
+    "ag-grid-odata": "^1.0.40",
     "file-saver": "^2.0.5",
     "ngx-filesaver": "^19.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "xlsx": "^0.18.5",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {

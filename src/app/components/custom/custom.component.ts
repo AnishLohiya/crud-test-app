@@ -11,7 +11,6 @@ import {
   ValueFormatterParams,
   ValueParserParams,
 } from 'ag-grid-community';
-import { ActionCellRendererComponent } from '../action-cell-renderer/action-cell-renderer.component';
 import { FormModalComponent } from '../../shared/form-modal/form-modal.component';
 import { equityFormFields } from '../../utils/equityFormFields';
 import {
@@ -29,13 +28,11 @@ import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
-import { MultiCellRenderer } from '../../shared/custom-render/multi-cell.renderer.component';
 import { MatChipsModule } from '@angular/material/chips';
-import { MultiSelectComponent } from '../../shared/dropdown/multi-select/multi-select.component';
 import { TestComponent } from '../equity/test.component';
-import { ColType, EditType } from '../../../../enums/enums';
 import { ColumnFactory } from '../../../../factories/ColumnFactory/ColumnFactory';
 import { ActionItemsColumnFactory } from '../../../../factories/ActionItemsColumnFactory/ActionItemsColumnFactory';
+import OdataProvider from 'ag-grid-odata'
 
 @Component({
   selector: 'app-equity',
@@ -204,6 +201,7 @@ export class CustomComponent {
     this.gridApi = params.api;
     this.setColumnDefs();
   }
+
 
   openCreateModal() {
     const dialogRef = this.dialog.open(FormModalComponent, {
