@@ -11,7 +11,7 @@
   "private": true,
   "dependencies": {
     "@angular/animations": "^19.0.0",
-    "@angular/cdk": "^19.0.2",
+    "@angular/cdk": "^19.0.5",
     "@angular/common": "^19.0.0",
     "@angular/compiler": "^19.0.0",
     "@angular/core": "^19.0.0",
@@ -27,6 +27,8 @@
     "ag-grid-odata": "^1.0.40",
     "file-saver": "^2.0.5",
     "ngx-filesaver": "^19.0.0",
+    "odata-data-source": "^16.4.0",
+    "odata-query": "^7.0.8",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "xlsx": "^0.18.5",

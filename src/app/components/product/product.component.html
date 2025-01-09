@@ -1,11 +1,14 @@
-<div>
-    <button mat-raised-button color="primary" (click)="openCreateModal()">Add Product</button>
+<div class="container">
+  <div>
+    <label for="titleFilter">Filter by Title:</label>
+    <select id="titleFilter" (change)="onTitleFilterChange($event)">
+      <option *ngFor="let title of titles" [value]="title">{{ title }}</option>
+    </select>
+  </div>
+  <ag-grid-angular
+    style="height: 800px; width: 100%;"
+    class="ag-theme-quartz"
+    [gridOptions]="gridOptions"
+    [rowData]="rowData"
+  ></ag-grid-angular>
 </div>
-  <app-ag-generic-grid
-  [rowData]="products"
-  [columnDefs]="colDefs"
-  [defaultColDef]="defaultColDef"
-  [pagination]="pagination"
-  [paginationPageSize]="paginationPageSize"
-  [paginationPageSizeSelector]="paginationPageSizeSelector"
-></app-ag-generic-grid>

@@ -8,8 +8,6 @@ import {
   GridApi,
   GridOptions,
   GridReadyEvent,
-  IRichCellEditorParams,
-  RowModelType,
   SideBarDef,
   ValueFormatterParams,
   ValueParserParams,
@@ -91,6 +89,17 @@ export class EquityComponent {
     },
     { field: 'stock_symbol', pinned: 'left' },
     {
+      field: 'multi_cell',
+      cellRenderer: MultiCellRenderer,
+      cellEditor: MultiSelectComponent,
+      cellEditorParams: {
+        values: [],
+        cellRender: (params: any) => params.value,
+        suppressMultiSelectPillRenderer: true,
+      },
+      minWidth: 250,
+    },
+    {
       field: 'purchase_date',
       filter: 'agDateColumnFilter',
     },
@@ -114,17 +123,6 @@ export class EquityComponent {
         values: marketCapValues,
         cellRender: (params: any) => params.value,
       },
-    },
-    {
-      field: 'multi_cell',
-      cellRenderer: MultiCellRenderer,
-      cellEditor: MultiSelectComponent,
-      cellEditorParams: {
-        values: [],
-        cellRender: (params: any) => params.value,
-        suppressMultiSelectPillRenderer: true,
-      },
-      minWidth: 250,
     },
     { field: 'purchase_price' },
     { field: 'sale_price' },
@@ -400,8 +398,6 @@ export class EquityComponent {
   onGridReady(params: GridReadyEvent<IEquity>): void {
     this.gridApi = params.api;
     this.setColumnDefs();
-
-   
   }
   // console.log(this.dataSource);
   // this.gridApi.sizeColumnsToFit();
